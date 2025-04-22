@@ -6,9 +6,14 @@ from app.routes.user import router as user_router
 from contextlib import asynccontextmanager
 app = FastAPI(title="Blog API")
 
-@asynccontextmanager("lifespan")
-def on_startup():
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("lifespan: starting")
     create_db_and_tables()
+    yield
+    print("lifespan: shutting down")
 
 app.include_router(post_router)
 app.include_router(user_router)
