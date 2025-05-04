@@ -1,56 +1,93 @@
+from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlmodel import Session, select
-from starlette import status
-
+from jose import jwt, JWTError
 from app.database import get_session
-from app.models import CreateUserRequest, Users
+from app.models import TokenData,  Users
 
 
-router = APIRouter(
-    prefix= "/auth",
-    tags=['auth']
-)
+pwd_context = CryptContext(schemes=("bcrypt"))
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+SECRET_KEY = "8d10cb8c6ffb5e5ff4ae476c3395803a5fc221ce7bdbb7337b148ec982c01100"
+ALGORITHM = "HS256"
+EXPIRY_MINUTES = 30
 
 
-SECRET_KEY = "6bd169965f84fd4a9123b813535d399c7bed63e9a561b9b1dba391398a5220fc"  # openssl rand -hex 32
-ALGORITHIM = "HS256"  # algorithm used to encode the JWT  
+def hash_password(password):
+    return pwd_context.hash(password)
 
+# ***********         ********** VERIFY PASSWORD ************          ******************
 
- # to encrypt / hash the password
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto" )  
+def verify_password(password, hashed_password):
+    return pwd_context.verify(password, hashed_password)
 
+# ***********         ********** REGISTER USER ************          ******************
 
-# to get the token from the request
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")  
-
-
-# this is a dependency that will be used to get the database session
-db_dependency = Annotated[Session, Depends(get_session)] 
-
-
-# here create user function will be used to create a user
-# and return the user object
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(db : db_dependency, create_user_request: CreateUserRequest):
-    # Check if username already exists
-    existing_user = db.exec(select(Users).where(Users.username == create_user_request.username)).first()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists"
-        )
-    new_user = Users(
-        username=create_user_request.username,
-        hash_password=bcrypt_context.hash(create_user_request.password)
-    )
-    # Add the new user to the database
-    db.add(new_user)
-    db.commit()
-    # db.refresh(new_user)
-    # return new_user
+def get_user_from_db(session : Annotated[Session, Depends(get_session)],
+                     username : str, 
+                     email : str = None):
+    statement = select(Users).where(Users.username == username)
+    user = session.exec(statement).first()
+    if not user:
+        statement = select(Users).where(Users.email == email)
+        user = session.exec(statement).first()
+        if user:
+            return user
+    return user
     
+    
+# ***********         ********** Authenticate User ************          ******************
+
+def authenticate_user(session : Annotated[Session, Depends(get_session)],
+                      username,
+                      password,
+                      ):
+       db_user = get_user_from_db(username=username, session=session, email=username)
+       if not db_user:
+           return False
+       if not verify_password(password=password, hashed_password=db_user.password):
+           return False
+       return db_user
 
 
+# ***********         ********** CREATE ACCESS TOKEN ************          ******************
+
+def create_access_token(data: dict, expiry_time : timedelta | None = None):
+    encode_data = data.copy()
+    if expiry_time:
+        expire = datetime.now(timezone.utc) + expiry_time
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    encode_data.update({"exp":expire})
+    encoded_jwt = jwt.encode(encode_data, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+
+# ***********         ********** DECODE ACCESS TOKEN / Current User ************          ******************
+
+def current_user(token : Annotated[str, Depends(oauth2_scheme)],
+                 session : Annotated[Session, Depends(get_session)]):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+        token_data = TokenData(username=username)
+
+    except:
+        raise JWTError
+    user = get_user_from_db(session=session, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    return user

@@ -1,22 +1,18 @@
 
-
 from sqlmodel import SQLModel, Session, create_engine
-from app import settings
-from app.models import Users
+from app import  settings
 
 
-connection_str = str(settings.DATABASE_URL).replace("postgresql", "postgresql+psycopg")
+connection_string  = str (settings.DATABASE_URL).replace(
+    "postgresql", "postgresql+psycopg2"
+)
 
-
-engine = create_engine(connection_str, echo=True)
+engine = create_engine(connection_string, pool_size=300)
 
 
 def create_db_and_tables():
-    """Create the database and tables."""
-    # Create the database and tables
     SQLModel.metadata.create_all(engine)
 
 def get_session():
-    """Get a session to the database."""
     with Session(engine) as session:
         yield session
