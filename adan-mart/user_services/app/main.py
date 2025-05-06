@@ -1,7 +1,11 @@
-from fastapi import FastAPI
+from typing import Annotated
+from fastapi import Depends, FastAPI
 from contextlib import asynccontextmanager
+
+from sqlmodel import Session
 from app import auth
-from app.database import create_db_and_tables
+from app.database import create_db_and_tables, get_session
+from app.models import Users
 from app.router.user import user_router
 
 
@@ -24,3 +28,8 @@ app.include_router(router=user_router)
 @app.get("/")
 def greet (name):
     return f"hello {name}! Welcome to Adan Mart"
+
+@app.get("/me")
+async def user_profile(session: Annotated[Session, Depends(get_session)],
+                       current_user : Annotated[Users, Depends(auth.current_user)]):
+    return {"Hello" : "World"}
