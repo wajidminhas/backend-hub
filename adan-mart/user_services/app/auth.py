@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from sqlmodel import Session, select
 from jose import jwt, JWTError
 from app.database import get_session
-from app.models import TokenData,  Users
+from app.models import RefreshTokenData, TokenData,  Users
 from dotenv import load_dotenv
 import os
 
@@ -21,7 +21,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY is not set in the environment variables.")
 ALGORITHM = "HS256"
-EXPIRY_TIME = 30
+EXPIRY_TIME = 1
 
 
 def hashed_password(password):
@@ -120,3 +120,37 @@ def current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Annotat
         raise credentials_exception
     return user
 
+                #****************Create Refresh Token*********************
+
+def create_refresh_token(data: dict, expiry_time: timedelta | None = None):
+    encode_data = data.copy()
+    if expiry_time:
+        expire = datetime.now(timezone.utc) + expiry_time
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(days=30)
+    encode_data.update({"exp" : expire})
+    encode_jwt = jwt.encode(encode_data, algorithm=ALGORITHM, key=SECRET_KEY)
+    return encode_jwt
+
+def validate_refresh_token(token:str,
+                  session: Annotated[Session, Depends(get_session)]):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    try: 
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+        token_data = RefreshTokenData(email=email)
+    
+    except:
+        raise JWTError
+    
+    user = get_user_from_db(session=session, email=token_data.email)
+    if user is None:
+        raise credentials_exception
+    return user

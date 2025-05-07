@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
-from app.auth import EXPIRY_TIME, authenticate_user, create_access_token, current_user, hashed_password, oauth2_scheme
+from app.auth import EXPIRY_TIME, authenticate_user, create_access_token, create_refresh_token, current_user, hashed_password, oauth2_scheme, validate_refresh_token
 from app.auth import get_user_from_db, hashed_password
 from app.database import get_session
-from app.models import Register_User, Users
+from app.models import Register_User, Token, Users
 
 
 user_router = APIRouter(
@@ -33,6 +33,8 @@ async def register_user(new_data : Annotated[Register_User, Depends()],
     session.refresh(user)
     return {"message": f""" User {user.username} has been registered"""}
 
+#     ********** LOGIN USER ************
+
 @user_router.post("/token")
 def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):
     user = authenticate_user(session, form_data.username, form_data.password)
@@ -45,7 +47,12 @@ def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], sessi
     
     expire_time =timedelta(minutes=EXPIRY_TIME)
     access_token = create_access_token({"sub": form_data.username}, expire_time)
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    refresh_expire_time = timedelta(days=7)
+    refresh_token = create_refresh_token({"sub": form_data.username}, refresh_expire_time)
+    return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+
+#     ********** GET USER PROFILE ************ 
 
 @user_router.get("/user")
 async def profile(current_user: Annotated[Users, Depends(current_user)]):
@@ -54,3 +61,27 @@ async def profile(current_user: Annotated[Users, Depends(current_user)]):
         "email": current_user.email,
         "id": current_user.id,
     }
+
+#     ********** REFRESH TOKEN ************
+
+@user_router.post("/token/refresh")
+async def refresh_token(old_token: str, session: Annotated[Session, Depends(get_session)]):
+    # write credentials exception
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    user = validate_refresh_token(old_token, session)
+    if not user:
+        raise credentials_exception
+    
+    expire_time = timedelta(minutes=EXPIRY_TIME)
+    access_token = create_access_token({"sub": user.username}, expire_time)
+    
+    refresh_expire_time = timedelta(days=7)
+    refresh_token = create_refresh_token({"sub": user.email}, refresh_expire_time)
+
+    return Token({"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"})
+                                                          
