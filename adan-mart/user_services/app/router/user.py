@@ -37,7 +37,7 @@ async def register_user(new_data : Annotated[Register_User, Depends()],
 
 @user_router.post("/token")
 def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], session: Annotated[Session, Depends(get_session)]):
-    user = authenticate_user(session, form_data.username, form_data.password)
+    user = authenticate_user(session, form_data.username,  form_data.password)
     if not user:
         raise HTTPException(
             status_code=400,
@@ -49,7 +49,7 @@ def login_user(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], sessi
     access_token = create_access_token({"sub": form_data.username}, expire_time)
 
     refresh_expire_time = timedelta(days=7)
-    refresh_token = create_refresh_token({"sub": form_data.username}, refresh_expire_time)
+    refresh_token = create_refresh_token({"sub": user.email}, refresh_expire_time)
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 #     ********** GET USER PROFILE ************ 
@@ -65,7 +65,7 @@ async def profile(current_user: Annotated[Users, Depends(current_user)]):
 #     ********** REFRESH TOKEN ************
 
 @user_router.post("/token/refresh")
-async def refresh_token(old_token: str, session: Annotated[Session, Depends(get_session)]):
+async def generate_refresh_token(old_token: str, session: Annotated[Session, Depends(get_session)]):
     # write credentials exception
     credentials_exception = HTTPException(
         status_code=401,
@@ -83,5 +83,5 @@ async def refresh_token(old_token: str, session: Annotated[Session, Depends(get_
     refresh_expire_time = timedelta(days=7)
     refresh_token = create_refresh_token({"sub": user.email}, refresh_expire_time)
 
-    return Token({"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"})
+    return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
                                                           

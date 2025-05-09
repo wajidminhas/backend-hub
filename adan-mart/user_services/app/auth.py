@@ -35,7 +35,7 @@ def verify_password(password, hashed_password):
 # ***********         ********** REGISTER USER ************          ******************
 
 def get_user_from_db(session : Annotated[Session, Depends(get_session)],
-                     username : str, 
+                     username : str | None = None,
                      email: str | None = None):
     statement = select(Users).where(Users.username == username)
     user = session.exec(statement).first()
@@ -147,8 +147,8 @@ def validate_refresh_token(token:str,
             raise credentials_exception
         token_data = RefreshTokenData(email=email)
     
-    except:
-        raise JWTError
+    except JWTError:
+        raise credentials_exception
     
     user = get_user_from_db(session=session, email=token_data.email)
     if user is None:
