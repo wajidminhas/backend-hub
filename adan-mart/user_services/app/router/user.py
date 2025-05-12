@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
-from app.auth import EXPIRY_TIME, authenticate_user, create_access_token, create_refresh_token, current_user, hashed_password, oauth2_scheme, validate_refresh_token
+from app.auth import EXPIRY_TIME, authenticate_user, create_access_token, create_refresh_token, current_user, hashed_password, oauth2_scheme, validate_refresh_token, verify_password
 from app.auth import get_user_from_db, hashed_password
 from app.database import get_session
-from app.models import Register_User, Token, Users
+from app.models import PasswordUpdate, Register_User, Token, Users
 
 
 user_router = APIRouter(
@@ -84,4 +84,20 @@ async def generate_refresh_token(old_token: str, session: Annotated[Session, Dep
     refresh_token = create_refresh_token({"sub": user.email}, refresh_expire_time)
 
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+
+#    ********** UPDATE USER PASSWORD ************
+
+@user_router.put("/update_password")
+async def update_password(current_user : Annotated[Users, Depends(current_user)],
+                          password_data : Annotated[PasswordUpdate, Depends()],
+                          session: Annotated[Session, Depends(get_session)]):
+    db_user = get_user_from_db(session=session, username=current_user.username)
+    if not db_user:
+        raise HTTPException(status_code=400, detail="User does not exist")
+    if not verify_password(password=password_data.current_password, hashed_password=db_user.hash_password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+    db_user.hash_password = hashed_password(password_data.new_password)
+    session.add(db_user)
+    session.commit()
+    return {"message": f""" User {db_user.username}'s password has been updated""" }
                                                           
