@@ -26,10 +26,11 @@ app = FastAPI(
 app.include_router(router=user_router)
 
 @app.get("/")
-def greet (name):
+def greet(name: str):
     return f"hello {name}! Welcome to Adan Mart"
 
 @app.get("/me")
 async def user_profile(session: Annotated[Session, Depends(get_session)],
-                       current_user : Annotated[Users, Depends(auth.current_user)]):
+                       current_user : Annotated[Users, Depends(auth.current_user)]
+                       ):
     return {"Hello" : "World"}

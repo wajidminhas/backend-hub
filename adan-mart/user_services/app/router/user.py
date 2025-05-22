@@ -10,7 +10,7 @@ from app.models import PasswordUpdate, Register_User, Token, Users
 
 
 user_router = APIRouter(
-    prefix= "/user",
+    prefix="/user",
     tags = ["user"],
     responses= {404: {"description": "User Not found"}},
 )

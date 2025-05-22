@@ -13,7 +13,7 @@ import os
 
 pwd_context = CryptContext(schemes=["bcrypt"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 
 load_dotenv()
@@ -21,10 +21,10 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY is not set in the environment variables.")
 ALGORITHM = "HS256"
-EXPIRY_TIME = 1
+EXPIRY_TIME = 10
 
 
-def hashed_password(password):
+def hashed_password(password: str) -> str:
     return pwd_context.hash(password)
 
 # ***********         ********** VERIFY PASSWORD ************          ******************
