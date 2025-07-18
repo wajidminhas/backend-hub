@@ -1,0 +1,19 @@
+[project]
+name = "fastapi-practice"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "wajidminhas", email = "shanitent667@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.116.1",
+]
+
+[project.scripts]
+fastapi-practice = "fastapi_practice:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
