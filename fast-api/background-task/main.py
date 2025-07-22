@@ -1,4 +1,4 @@
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Query
 from pydantic import EmailStr
 
 app: FastAPI = FastAPI()
