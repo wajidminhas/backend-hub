@@ -97,3 +97,49 @@ class ProductResponse(ProductBase):
     tags: Optional[List[str]] = None
 
     model_config = {"from_attributes": True}
+
+class ProductImageCreate(BaseModel):
+    image_url: HttpUrl
+
+class ProductImageResponse(BaseModel):
+    id: int
+    product_id: int
+    image_url: str
+
+    model_config = {"from_attributes": True}
+
+class CategoryCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Category name cannot be empty")
+        if len(value) > 50:
+            raise ValueError("Category name must be 50 characters or less")
+        return value.strip()
+
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}
+
+class TagCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Tag name cannot be empty")
+        if len(value) > 50:
+            raise ValueError("Tag name must be 50 characters or less")
+        return value.strip()
+
+class TagResponse(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}

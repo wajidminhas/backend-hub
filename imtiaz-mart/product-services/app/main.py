@@ -1,6 +1,5 @@
-def main():
-    print("Hello from product-services!")
+from fastapi import FastAPI
+from .router import product
 
-
-if __name__ == "__main__":
-    main()
+app = FastAPI(title="Imtiaz Mart Product Service")
+app.include_router(product.router)
