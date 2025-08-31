@@ -11,6 +11,7 @@ fastapi = "^0.115.12"
 sqlmodel = "^0.0.24"
 uvicorn = "^0.34.1"
 psycopg = "^3.2.6"
+psycopg2-binary = "^2.9.10"
 
 
 [build-system]

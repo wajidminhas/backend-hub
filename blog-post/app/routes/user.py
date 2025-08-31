@@ -2,9 +2,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.database import engine
-from app.models.user import User, UserCreate, UserUpdate
+from app.models.user import  UserCreate, UserUpdate
 from app.crud.user import create_user, get_users, get_user, update_user, delete_user
 from typing import List
+from app.models.post import User  # Import the User model
+
 
 router = APIRouter(prefix="/users", tags=["Users"])
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
 from app.database import engine
 from app.models.post import Post, PostCreate, PostUpdate
-from app.crud.post import create_post, get_posts, get_post, update_post, delete_post
+from app.crud.post import create_post, get_posts, get_post, update_post, delete_post, get_all_posts
 from typing import List
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -40,3 +40,11 @@ def delete_post_route(post_id: int, session: Session = Depends(get_session)):
     if not success:
         raise HTTPException(status_code=404, detail="Post not found")
     return {"message": "Post deleted"}
+
+@router.get("/posts")
+def read_all_posts(session: Session = Depends(get_session)):
+    try:
+        posts = get_all_posts(session)
+        return posts
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

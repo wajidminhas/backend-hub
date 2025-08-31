@@ -39,3 +39,6 @@ def delete_post(session: Session, post_id: int) -> bool:
         session.commit()
         return True
     return False
+
+def get_all_posts(session: Session) -> list[Post]:
+    return session.exec(select(Post)).all()

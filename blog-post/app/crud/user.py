@@ -1,6 +1,8 @@
 # app/crud/user.py
 from sqlmodel import Session, select
-from app.models.user import User, UserCreate
+from app.models.user import UserCreate
+from app.models.post import User
+from typing import Optional
 
 def create_user(session: Session, user: UserCreate) -> User:
     db_user = User.from_orm(user)
