@@ -4,7 +4,6 @@ from app.database import create_db_and_tables
 from app.routes.post import router as post_router
 from app.routes.user import router as user_router
 from contextlib import asynccontextmanager
-app = FastAPI(title="Blog API")
 
 
 
@@ -14,6 +13,8 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     yield
     print("lifespan: shutting down")
+
+app = FastAPI(title="Blog API")
 
 app.include_router(post_router)
 app.include_router(user_router)

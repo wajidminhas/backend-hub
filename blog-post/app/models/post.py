@@ -11,19 +11,20 @@ class User(SQLModel, table=True):
     # Relationship: One user can have many posts
     posts: List["Post"] = Relationship(back_populates="author")
 
+
+
 class Post(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     title: str
     content: str
-    author_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    
-    # Relationship: Each post belongs to one user
-    author: Optional[User] = Relationship(back_populates="posts")
+    author_id: int | None = Field(default=None, foreign_key="user.id")  # Assuming a User model exists)
+
+    author: User | None = Relationship(back_populates="posts")
 
 class PostCreate(SQLModel):
     title: str
     content: str
-    author_id: int
+    author_id: Optional[int] = None
 
 class PostUpdate(SQLModel):
     title: Optional[str] = None

@@ -1,7 +1,7 @@
 # app/routes/post.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session
-from app.database import engine
+from app.database import engine, create_session
 from app.models.post import Post, PostCreate, PostUpdate
 from app.crud.post import create_post, get_posts, get_post, update_post, delete_post, get_all_posts
 from typing import List
@@ -12,9 +12,14 @@ def get_session():
     with Session(engine) as session:
         yield session
 
-@router.post("/", response_model=Post)
-def create_post_route(post: PostCreate, session: Session = Depends(get_session)):
-    return create_post(session, post)
+# @router.post("/", response_model=Post)
+@router.post("/posts/")
+async def create_post(post: PostCreate, session: Session = Depends(create_session)):
+    db_post = Post(**post.dict())
+    session.add(db_post)
+    session.commit()
+    session.refresh(db_post)
+    return db_post
 
 @router.get("/", response_model=List[Post])
 def read_posts(session: Session = Depends(get_session)):

@@ -1,17 +1,20 @@
-# app/database.py
-from sqlmodel import create_engine, SQLModel
-from sqlmodel import Session
-
+from sqlmodel import create_engine, SQLModel, Session
 from app import settings
-from app.settings import DATABASE_URL
-# DATABASE_URL = "sqlite:///blog.db"
+# from app.models import User, Post  # Import models
 
-connectin_string = str (settings.DATABASE_URL).replace("postgresql", "postgresql+psycopg")
+connection_string = str(settings.DATABASE_URL).replace("postgresql", "postgresql+psycopg")
+engine = create_engine(connection_string, echo=True)
 
-engine = create_engine(connectin_string, echo=True)
+
 def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+    print("Creating tables...")
+    try:
+        SQLModel.metadata.create_all(engine)
+        print("Tables created successfully: user, post")
+    except Exception as e:
+        print(f"Table creation failed: {e}")
+        raise
 
 def create_session():
-    
-    return Session(engine)
+    with Session(engine) as session:
+        yield session
