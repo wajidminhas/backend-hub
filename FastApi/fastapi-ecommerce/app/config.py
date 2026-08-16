@@ -5,12 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 class Settings(BaseSettings):
-    db_engine: str = "postgresql+pscyopg2"
-    db_user : str
-    db_password : str
-    db_host: str
-    db_port: int
-    db_name: str 
+    database_url : str
     
     model_config = SettingsConfigDict(
         env_file = ".env",

@@ -2,6 +2,7 @@
 from typing import Optional
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from app.database import Base
 
 class Base(DeclarativeBase):
     pass
