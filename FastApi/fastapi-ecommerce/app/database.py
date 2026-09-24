@@ -19,5 +19,5 @@ from app.config import settings
 engine = create_engine(settings.database_url, echo=True)
 
 
-SessionLocal = sessionmaker()
+SessionLocal = sessionmaker(autoflush=False, autocommit=False, bind=engine)
 Base = declarative_base()

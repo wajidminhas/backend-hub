@@ -24,7 +24,7 @@ async def read_root():
     return {"Hello": "World"}
 
 
-@app.get("/items/{item_id}")
+@app.get("/item/{item_id}")
 async def read_item(item : str, item_id : int):
     return {"item" : item, "item_id" : item_id}
 
@@ -35,6 +35,6 @@ async def get_personal_detail(personal_data : Person):
     return {"person_f_name" : personal_data.f_name, "persone_l_name" : personal_data.l_name}
 
 @app.put("/item/{item_id}")
-async def update_item(item_id : str, item : Item):
+async def update_item(item_id : int, item : Item):
     return {"item_name" : item.name, "item_price" : item.price, "item_id" : item_id}
 
