@@ -4,8 +4,9 @@
 
 
 
-from typing import Generator
+from typing import Annotated, Generator
 
+from fastapi.params import Depends
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
@@ -21,3 +22,4 @@ def get_db() -> Generator[Session, None, None]:
             session.roll_back()
             raise
     
+DbSession = Annotated[Session, Depends(get_db)]
